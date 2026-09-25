@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRZ Batch Reader — Đọc hộ chiếu hàng loạt</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <svg class="brand-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M16 3 4 7v8c0 7 5 11.5 12 14 7-2.5 12-7 12-14V7L16 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M11 16.5l3.2 3.2L21.5 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="brand-title">MRZ Batch Reader</div>
+      <div class="brand-subtitle">Hệ thống đọc &amp; đối soát dữ liệu MRZ hộ chiếu hàng loạt</div>
+    </div>
+  </div>
+  <div class="topbar-meta">
+    <span class="engine-tag">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="3" fill="currentColor"/></svg>
+      OCR-B Recognition Engine
+    </span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="stats-strip" id="statsStrip">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-label">Tổng số ảnh</div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-value" id="statSuccess">0</div>
+      <div class="stat-label">Thành công</div>
+    </div>
+    <div class="stat-card stat-warning">
+      <div class="stat-value" id="statWarning">0</div>
+      <div class="stat-label">Cảnh báo</div>
+    </div>
+    <div class="stat-card stat-error">
+      <div class="stat-value" id="statError">0</div>
+      <div class="stat-label">Lỗi</div>
+    </div>
+    <div class="stat-card stat-rate">
+      <div class="stat-value" id="statAccuracy">—</div>
+      <div class="stat-label">Tỷ lệ đọc thành công</div>
+    </div>
+  </section>
+
+  <section class="panel upload-panel" id="dropzone">
+    <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" multiple hidden>
+    <div class="upload-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 16V4m0 0-4 4m4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="upload-title">Kéo và thả ảnh hộ chiếu vào đây</p>
+    <p class="upload-hint">Hỗ trợ chọn nhiều ảnh cùng lúc · JPEG, PNG, WEBP · Xử lý bằng engine OCR-B chuyên biệt cho MRZ</p>
+    <button class="btn btn-primary" id="browseBtn" type="button">Chọn ảnh từ máy tính</button>
+  </section>
+
+  <section class="panel queue-panel">
+    <div class="queue-header">
+      <div class="queue-title-group">
+        <h2 class="queue-title">Danh sách xử lý</h2>
+        <span class="queue-count" id="queueCount">0 ảnh</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="queue-table">
+        <thead>
+          <tr>
+            <th class="col-stt">#</th>
+            <th class="col-file">Tệp ảnh</th>
+            <th class="col-status">Trạng thái</th>
+            <th class="col-name">Họ và tên</th>
+            <th class="col-dob">Ngày sinh</th>
+            <th class="col-sex">Giới tính</th>
+            <th class="col-passport">Số hộ chiếu</th>
+            <th class="col-country">Quốc gia</th>
+	    <th>Thời gian</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="queueBody">
+          <tr class="empty-row" id="emptyRow">
+            <td colspan="9">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+                <span>Chưa có ảnh nào — thêm ảnh để bắt đầu</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="actionbar">
+  <div class="actionbar-info" id="actionbarInfo">Chưa xử lý ảnh nào</div>
+  <div class="actionbar-buttons">
+    <button class="btn btn-ghost" id="clearBtn" type="button">Xóa danh sách</button>
+    <button class="btn btn-secondary" id="processBtn" type="button" disabled>Xử lý tất cả</button>
+    <button class="btn btn-accent" id="exportBtn" type="button" disabled>Xuất file Excel (.xlsx)</button>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# render.yaml — Render Blueprint
+# File này giúp Render tự nhận diện cấu hình khi triển khai qua tính năng
+# "Blueprint" (New + > Blueprint), không bắt buộc phải dùng - vẫn có thể tạo
+# Web Service thủ công theo hướng dẫn trong HUONG_DAN_TRIEN_KHAI_RENDER.md.
+services:
+  - type: web
+    name: mrz-batch-reader
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true

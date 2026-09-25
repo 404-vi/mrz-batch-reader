@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRZ Batch Reader — Đọc hộ chiếu hàng loạt</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <svg class="brand-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="3" y="4" width="26" height="24" rx="2" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="11" cy="12.5" r="3" stroke="currentColor" stroke-width="1.4"/>
+      <path d="M6.5 20c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M19 11h7M19 14h7M19 22h7M19 24.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="brand-title">MRZ Batch Reader</div>
+      <div class="brand-subtitle">Đọc &amp; đối soát dữ liệu MRZ hộ chiếu hàng loạt</div>
+    </div>
+  </div>
+  <div class="topbar-meta">
+    <span class="badge badge-neutral">Nền tảng nội bộ</span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="panel upload-panel" id="dropzone">
+    <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" multiple hidden>
+    <div class="upload-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 16V4m0 0-4 4m4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="upload-title">Kéo và thả ảnh hộ chiếu vào đây</p>
+    <p class="upload-hint">Hỗ trợ chọn nhiều ảnh cùng lúc · JPEG, PNG, WEBP</p>
+    <button class="btn btn-primary" id="browseBtn" type="button">Chọn ảnh từ máy tính</button>
+  </section>
+
+  <section class="panel queue-panel">
+    <div class="queue-header">
+      <div class="queue-title-group">
+        <h2 class="queue-title">Danh sách xử lý</h2>
+        <span class="queue-count" id="queueCount">0 ảnh</span>
+      </div>
+      <div class="queue-summary" id="queueSummary" hidden>
+        <span class="summary-item summary-success"><i class="dot"></i><span id="countSuccess">0</span> thành công</span>
+        <span class="summary-item summary-warning"><i class="dot"></i><span id="countWarning">0</span> cảnh báo</span>
+        <span class="summary-item summary-error"><i class="dot"></i><span id="countError">0</span> lỗi</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="queue-table">
+        <thead>
+          <tr>
+            <th class="col-stt">#</th>
+            <th class="col-file">Tệp ảnh</th>
+            <th class="col-status">Trạng thái</th>
+            <th class="col-name">Họ và tên</th>
+            <th class="col-dob">Ngày sinh</th>
+            <th class="col-sex">Giới tính</th>
+            <th class="col-passport">Số hộ chiếu</th>
+            <th class="col-country">Quốc gia</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="queueBody">
+          <tr class="empty-row" id="emptyRow">
+            <td colspan="9">Chưa có ảnh nào — thêm ảnh để bắt đầu.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="actionbar">
+  <div class="actionbar-info" id="actionbarInfo">Chưa xử lý ảnh nào</div>
+  <div class="actionbar-buttons">
+    <button class="btn btn-ghost" id="clearBtn" type="button">Xóa danh sách</button>
+    <button class="btn btn-secondary" id="processBtn" type="button" disabled>Xử lý tất cả</button>
+    <button class="btn btn-accent" id="exportBtn" type="button" disabled>Xuất file Excel (.xlsx)</button>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

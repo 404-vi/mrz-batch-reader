@@ -63,7 +63,11 @@ def _process_image_sync(image_bytes: bytes):
     parsed = find_and_parse_mrz(lines_bottom)
     if parsed is not None:
         return parsed, lines_bottom
-    return None, lines_bottom
+
+    lines_full = ocr_full_image(img)
+    parsed = find_and_parse_mrz(lines_bottom + lines_full)
+    return parsed, lines_bottom + lines_full
+
 
 @app.post("/api/read-mrz")
 async def read_mrz(file: UploadFile = File(...)):

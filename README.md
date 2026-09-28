@@ -23,8 +23,33 @@ K, O ngẫu nhiên).
 https://github.com/Shreeshrii/tessdata_ocrb, đặt tại `app/tessdata/`), theo đánh
 giá công khai có tỷ lệ lỗi ký tự ~0% so với ~45% của model mặc định. Đã kiểm chứng
 lại bằng 3 ảnh hộ chiếu Trung Quốc thật (không phải ảnh dựng sẵn): đọc đúng 100%
-họ tên, ngày sinh, giới tính, số hộ chiếu, quốc gia trên cả 3 ảnh, xử lý dưới 0.6
-giây/ảnh.
+họ tên, ngày sinh, giới tính, số hộ chiếu, quốc gia trên cả 3 ảnh.
+
+## ⚡ Bản cập nhật: tăng tốc xử lý ảnh 3-4 lần
+
+**Vấn đề:** đo thực tế cho thấy ~96% thời gian xử lý 1 ảnh nằm ở việc gọi Tesseract -
+cụ thể là do thư viện `pytesseract` khởi động một **tiến trình hệ điều hành mới** (và
+nạp lại model OCR-B từ đầu) cho MỖI ảnh, thay vì tái sử dụng.
+
+**Đã sửa:** chuyển sang dùng thư viện `tesserocr` - gọi thẳng thư viện Tesseract qua
+API, giữ sẵn 1 phiên bản (instance) đã nạp model trong bộ nhớ suốt vòng đời server,
+không phải khởi động lại cho từng ảnh. Đo thực tế: **nhanh hơn 3-4 lần** (giảm từ
+~250ms xuống ~75-130ms/ảnh, đo trên máy 1 CPU).
+
+⚠️ **Lưu ý trung thực về gói Free của Render:** con số trên đo trên máy có 1 CPU đầy
+đủ. Gói Free của Render chỉ cấp **0.1 CPU** (khoảng 1/10 lõi) - theo tỷ lệ suy ra,
+thời gian thực tế trên Render sẽ chậm hơn khoảng 10 lần so với số đo ở trên. Đây là
+giới hạn phần cứng của gói miễn phí, không phải giới hạn của code - nếu cần nhanh
+hơn nữa và ổn định hơn, cần nâng cấp gói trả phí của Render (nhiều CPU hơn).
+
+`tesserocr` **không có bản cài dựng sẵn cho Windows** trên PyPI, nên KHÔNG được đưa
+vào `requirements.txt` dùng chung (sẽ làm hỏng bước cài đặt trên Windows cá nhân).
+Thay vào đó:
+- **Trên Docker/Render**: `tesserocr` được cài riêng trong `Dockerfile` → dùng đường nhanh.
+- **Trên máy cá nhân (Windows/Mac) chạy theo `HUONG_DAN_CAI_DAT.md`**: code tự động
+  phát hiện không có `tesserocr` và dùng lại `pytesseract` (đường dự phòng, chậm hơn
+  nhưng luôn chạy được, không cần cài thêm gì) - độ chính xác không đổi, chỉ tốc độ
+  khác nhau.
 
 ## Kiến trúc
 
@@ -35,7 +60,7 @@ mrz_reader/
 ├── render.yaml            # Cấu hình Render Blueprint (gói Free, tự động deploy)
 ├── app/
 │   ├── main.py          # FastAPI server: /api/read-mrz, /api/export-excel, phục vụ giao diện web
-│   ├── ocr_reader.py     # Tiền xử lý ảnh (OpenCV) + OCR (Tesseract, dùng model OCR-B)
+│   ├── ocr_reader.py     # Tiền xử lý ảnh (OpenCV) + OCR (model OCR-B, backend tesserocr/pytesseract)
 │   ├── mrz_parser.py     # Parse MRZ, validate & tự sửa check digit
 │   ├── excel_export.py   # Tạo file Excel (.xlsx) từ kết quả xử lý hàng loạt
 │   ├── tessdata/          # Model OCR-B chuyên biệt cho MRZ (QUAN TRỌNG - xem mục cập nhật ở trên)
@@ -51,6 +76,7 @@ mrz_reader/
 ```
 
 ## Cài đặt
+
 
 ```bash
 # 1. Cài Tesseract OCR engine (bắt buộc, không phải package Python)

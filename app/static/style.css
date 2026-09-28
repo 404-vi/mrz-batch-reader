@@ -342,3 +342,9 @@ html, body {
   .actionbar-buttons .btn { flex: 1; }
   .file-name { max-width: 120px; }
 }
+/* Ẩn huy hiệu Powered by Netlify nổi ở góc màn hình */
+#netlify-badge, 
+.netlify-badge, 
+a[href*="netlify.com"] > img[alt*="Netlify"] {
+    display: none !important;
+}

@@ -274,23 +274,62 @@ function render() {
 processBtn.addEventListener("click", () => { processBtn.disabled = true; processQueue(); });
 
 // Giữ nguyên API xuất file Excel theo backend Python (Nếu bạn tắt server backend, nút này sẽ không gọi được file excel)
-exportBtn.addEventListener("click", async () => {
-    exportBtn.disabled = true; exportBtn.textContent = "Đang tạo file…";
-    const payloadItems = state.items.filter(i => i.status !== "pending" && i.status !== "processing").map(i => ({
-        filename: i.file.name, success: i.status === "success" || i.status === "warning", data: i.data || null, error: i.error || null
-    }));
+// ---- TẠO VÀ TẢI FILE EXCEL TRỰC TIẾP TRÊN TRÌNH DUYỆT (BẰNG SHEETJS) ----
+exportBtn.addEventListener("click", () => {
+    exportBtn.disabled = true; 
+    exportBtn.textContent = "Đang tạo file…";
+
     try {
-        const res = await fetch("/api/export-excel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: payloadItems }) });
-        if (!res.ok) throw new Error("Lỗi server");
-        const url = URL.createObjectURL(await res.blob());
-        const a = document.createElement("a"); a.href = url; a.download = `ket_qua_mrz.xlsx`; document.body.appendChild(a); a.click(); URL.revokeObjectURL(url);
-    } catch (err) { alert(`Không xuất được file Excel: ${err.message}`); }
-    exportBtn.textContent = "Xuất file Excel (.xlsx)"; render();
-});
+        const rows = [];
+        const validItems = state.items.filter(i => i.status !== "pending" && i.status !== "processing");
 
-clearBtn.addEventListener("click", () => {
-    if (state.items.some(i => i.status === "processing")) return;
-    state.items.forEach(i => URL.revokeObjectURL(i.thumbUrl)); state.items = []; render();
-});
+        if (validItems.length === 0) {
+            alert("Không có dữ liệu để xuất.");
+            return;
+        }
 
-render();
+        // Chuẩn bị dữ liệu từng dòng
+        validItems.forEach((item, index) => {
+            if (item.status === "success" || item.status === "warning") {
+                const d = item.data;
+                rows.push({
+                    "STT": index + 1,
+                    "Tên file ảnh": item.file.name,
+                    "Họ và tên": `${d.surname || ""} ${d.given_names || ""}`.trim(),
+                    "Ngày sinh": d.birth_date || "",
+                    "Giới tính": SEX_LABELS[d.sex] || d.sex || "",
+                    "Số hộ chiếu": d.passport_number || "",
+                    "Quốc gia": d.nationality_name || d.issuing_country_name || "",
+                    "Thời gian": item.processingTime ? `${item.processingTime}s` : "",
+                    "Ghi chú": item.status === "success" ? "OK" : "Cảnh báo check digit"
+                });
+            } else {
+                rows.push({
+                    "STT": index + 1,
+                    "Tên file ảnh": item.file.name,
+                    "Họ và tên": "-",
+                    "Ngày sinh": "-",
+                    "Giới tính": "-",
+                    "Số hộ chiếu": "-",
+                    "Quốc gia": "-",
+                    "Thời gian": item.processingTime ? `${item.processingTime}s` : "",
+                    "Ghi chú": `LỖI: ${item.error || "Không đọc được"}`
+                });
+            }
+        });
+
+        // Tạo file Excel và kích hoạt tải xuống
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Ket Qua MRZ");
+        
+        // Hàm writeFile của SheetJS hoạt động tốt trên cả trình duyệt điện thoại và PC
+        XLSX.writeFile(wb, `ket_qua_mrz_${rows.length}_anh.xlsx`);
+
+    } catch (err) { 
+        alert(`Không xuất được file Excel: ${err.message}`); 
+    } finally {
+        exportBtn.textContent = "Xuất file Excel (.xlsx)"; 
+        render();
+    }
+});
